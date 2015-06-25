@@ -130,6 +130,12 @@ var logger = {
         return new Transaction(type, parent);
     },
 
+    augmentHeadersWithTransaction: function augmentHeadersWithTransaction(headersObj, transaction) {
+        if(headersObj && transaction) {
+            headersObj['x-flight-control-parent'] = transaction.id;
+        }
+    },
+
     express: function(req, res, next) {
         var parentTransactionID = null;
         if(req.headers['x-flight-control-parent']) {
