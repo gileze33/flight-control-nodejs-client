@@ -29,6 +29,7 @@ Transaction.prototype.write = function write(level, data) {
 
     logger.write(level, data);
 };
+Transaction.prototype.factory = Transaction;
 
 
 // method to write directly to the console for local logging
@@ -132,14 +133,14 @@ var logger = {
 
     augmentHeadersWithTransaction: function augmentHeadersWithTransaction(headersObj, transaction) {
         if(headersObj && transaction) {
-            headersObj['x-flight-control-parent'] = transaction.id;
+            headersObj['x-parent-transaction'] = transaction.id;
         }
     },
 
     express: function(req, res, next) {
         var parentTransactionID = null;
-        if(req.headers['x-flight-control-parent']) {
-            parentTransactionID = req.headers['x-flight-control-parent'];
+        if(req.headers['x-parent-transaction']) {
+            parentTransactionID = req.headers['x-parent-transaction'];
         }
 
         req.transaction = logger.createTransaction('express', parentTransactionID);
