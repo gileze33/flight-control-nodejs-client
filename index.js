@@ -29,7 +29,9 @@ Transaction.prototype.write = function write(level, data) {
 
     logger.write(level, data);
 };
-Transaction.prototype.factory = Transaction;
+Transaction.prototype.factory = function factory(type, parent) {
+    return new Transaction(type, parent);
+};
 
 
 // method to write directly to the console for local logging
@@ -131,12 +133,6 @@ var logger = {
         return new Transaction(type, parent);
     },
 
-    augmentHeadersWithTransaction: function augmentHeadersWithTransaction(headersObj, transaction) {
-        if(headersObj && transaction) {
-            headersObj['x-parent-transaction'] = transaction.id;
-        }
-    },
-
     express: function(req, res, next) {
         var parentTransactionID = null;
         if(req.headers['x-parent-transaction']) {
@@ -154,33 +150,69 @@ var logger = {
                     object[k] = data[k];
                 }
 
-                if(!object.headers) object.headers = req.headers;
-                if(!object.method) object.method = req.method + ' ' + req.path;
-                if(!object.params) object.params = req.params || {};
-                if(!object.query) object.query = req.query || {};
-                if(!object.body && typeof(req.body) !== 'undefined') object.body = req.body || {};
-
                 req.transaction.write(level, object);
             }
         };
 
         res.on('finish', function() {
             req.transaction.setData({
-                route: req.route.path,
-                method: req.method,
-                url: req.url,
-                status: res.statusCode
+                request: {
+                    route: req.route.path,
+                    method: req.method,
+                    url: req.url,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query,
+                    body: req.body
+                },
+                response: {
+                    status: res.statusCode
+                }
             });
 
             req.transaction.end();
         });
 
         next();
-    }, 
+    },
 
-    // method should be like - function(req, res, transaction, next) {}
-    use: function(method) {
-        middleware.push(method);
+    rabbitr: function(message, next) {
+        var ack = message.ack;
+        var reject = message.reject;
+        var send = message.send;
+
+        message.transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
+        delete message.data._parentTransaction;
+
+        var trace = function(status) {
+            message.transaction.setData({
+                topic: message.topic,
+                data: message.data,
+                status: status
+            });
+
+            message.transaction.end();
+        };
+
+        // TODO - make these swizzles args less arbritrary
+
+        // swizzle the ack and reject methods so they can trace once the message is complete
+        message.ack = function(a1, a2, a3) {
+            trace('ack');
+            ack(a1, a2, a3);
+        };
+        message.reject = function(a1, a2, a3) {
+            trace('reject');
+            reject(a1, a2, a3);
+        };
+
+        // swizzle the send method to the message object so nested tracing can occur
+        message.send = function(topic, data, cb) {
+            // here we just attach the current transaction ID to the message data
+            data._parentTransaction = message.transaction.id;
+
+            send(topic, data, cb);
+        };
     }
 };
 
