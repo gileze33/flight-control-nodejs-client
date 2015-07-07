@@ -14,7 +14,7 @@ var Transaction = function Transaction(type, parent) {
     this._startTime = new Date().getTime();
 
     // support for passing in the parent transaction directly rather than needing the ID
-    if(typeof(this.parent) === 'object') {
+    if(typeof(this.parent) === 'object' && this.parent != null) {
         if(typeof(this.parent.id) !== 'undefined') {
             this.parent = this.parent.id;
         }
