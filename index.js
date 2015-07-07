@@ -164,7 +164,7 @@ var logger = {
         res.on('finish', function() {
             req.transaction.setData({
                 request: {
-                    route: req.route.path,
+                    route: (req.route) ? req.route.path : '',
                     method: req.method,
                     url: req.url,
                     headers: req.headers,
