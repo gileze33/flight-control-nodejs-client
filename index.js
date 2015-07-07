@@ -1,5 +1,6 @@
 var request = require('request');
 var async = require('async');
+var circular = require('circular');
 
 var kSystemHostname = require('os').hostname();
 var kEnvironmentName = process.env.NODE_ENV || 'dev';
@@ -57,7 +58,7 @@ var writeLocal = function writeLocal(level, data) {
         prettyLevel = level.white;
     }
 
-    console.log(prettyLevel, JSON.stringify(data));
+    console.log(prettyLevel, JSON.stringify(data, circular()));
 };
 
 // method to attach constants to every trace and write
@@ -125,7 +126,7 @@ var logger = {
         request({
             url: opts.base + '/' + type + '?key=' + opts.key,
             method: 'POST',
-            body: JSON.stringify(obj),
+            body: JSON.stringify(obj, circular()),
             headers: {
                 'content-type': 'application/json'
             }
