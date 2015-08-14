@@ -191,6 +191,8 @@ process.on('uncaughtException', function (err) {
     }, function() {
         process.exit(1);
     });
+
+    process.exit();
 });
 console.log('Added generic exception handler for FlightControl logger\n');
 
