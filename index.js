@@ -177,9 +177,6 @@ var logger = {
     }
 };
 
-module.exports = logger;
-
-
 // attach a generic exception handler to write to FlightControl
 process.on('uncaughtException', function (err) {
     console.trace(err);
@@ -195,6 +192,5 @@ process.on('uncaughtException', function (err) {
     process.exit();
 });
 console.log('Added generic exception handler for FlightControl logger\n');
-
 
 module.exports = logger;
