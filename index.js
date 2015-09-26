@@ -189,10 +189,11 @@ var logger = {
         var _reject = message.reject;
         var _send = message.send;
 
-        message.transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
+        var transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
+        message.transaction = transaction;
         delete message.data._parentTransaction;
         message.logger = {
-            write: message.transaction.write
+            write: transaction.write.bind(transaction)
         };
 
         var completed = false;
