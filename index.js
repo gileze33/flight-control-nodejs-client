@@ -185,14 +185,20 @@ var logger = {
     },
 
     rabbitr: function(message, next) {
-        var ack = message.ack;
-        var reject = message.reject;
-        var send = message.send;
+        var _ack = message.ack;
+        var _reject = message.reject;
+        var _send = message.send;
 
         message.transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
         delete message.data._parentTransaction;
+        message.logger = message.transaction.logger;
 
+        var completed = false;
         var trace = function(status) {
+            // prevent us tracing twice in case theres a race condition on the client
+            if(completed) return;
+            completed = true;
+
             message.transaction.setData({
                 topic: message.topic,
                 data: message.data,
@@ -202,16 +208,14 @@ var logger = {
             message.transaction.end();
         };
 
-        // TODO - make these swizzles args less arbritrary
-
         // swizzle the ack and reject methods so they can trace once the message is complete
         message.ack = function(a1, a2, a3) {
             trace('ack');
-            ack(a1, a2, a3);
+            _ack(a1, a2, a3);
         };
         message.reject = function(a1, a2, a3) {
             trace('reject');
-            reject(a1, a2, a3);
+            _reject(a1, a2, a3);
         };
 
         // swizzle the send method to the message object so nested tracing can occur
@@ -219,8 +223,10 @@ var logger = {
             // here we just attach the current transaction ID to the message data
             data._parentTransaction = message.transaction.id;
 
-            send(topic, data, cb);
+            _send(topic, data, cb);
         };
+
+        next();
     }
 };
 
