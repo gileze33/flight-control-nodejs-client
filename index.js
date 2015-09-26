@@ -191,7 +191,9 @@ var logger = {
 
         message.transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
         delete message.data._parentTransaction;
-        message.logger = message.transaction.logger;
+        message.logger = {
+            write: message.transaction.write
+        };
 
         var completed = false;
         var trace = function(status) {
