@@ -1,5 +1,6 @@
 var request = require('request');
-var async = require('async');
+var util = require('util');
+var chalk = require('chalk');
 
 var kSystemHostname = require('os').hostname();
 var kEnvironmentName = process.env.NODE_ENV || 'dev';
@@ -30,25 +31,37 @@ Transaction.prototype.write = function write(level, data) {
     logger.write(level, data);
 };
 
+function prettyStack(stack) {
+    var lines = stack.split('\n');
+    lines.shift();
+
+    return lines.map(function(line) {
+        return line.indexOf('/node_modules/') > -1 ? chalk.black(line) : chalk.gray(line);
+    }).join('\n');
+}
 
 // method to write directly to the console for local logging
-var writeLocal = function writeLocal(level, data) {
+function writeLocal(level, data) {
     var prettyLevel;
     if(level === 'error') {
-        prettyLevel = level.red;
+        console.error(chalk.red(util.inspect(data)));
     }
     else if(level === 'warning') {
-        prettyLevel = level.yellow;
+        console.error(chalk.yellow(util.inspect(data)));
     }
     else if(level === 'info') {
-        prettyLevel = level.cyan;
+        console.log(chalk.cyan(util.inspect(data)));
     }
     else {
-        prettyLevel = level.white;
+        console.log(chalk.white(util.inspect(data)));
     }
 
-    console.log(prettyLevel, JSON.stringify(data));
-};
+    if (data && data.stack) {
+        console.log(prettyStack(data.stack));
+    } else if (data && data.exception && data.exception.stack) {
+        console.log(prettyStack(data.exception.stack));
+    }
+}
 
 // method to attach constants to every trace and write
 var formatData = function(data) {
@@ -174,7 +187,7 @@ var logger = {
     // method should be like - function(req, res, transaction, next) {}
     use: function(method) {
         middleware.push(method);
-    }
+    },
 };
 
 module.exports = logger;
