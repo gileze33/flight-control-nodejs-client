@@ -1,5 +1,6 @@
 var request = require('request');
-var async = require('async');
+var util = require('util');
+var chalk = require('chalk');
 var circular = require('circular');
 
 var kSystemHostname = require('os').hostname();
@@ -52,24 +53,37 @@ Transaction.prototype.promise = function promise(promise) {
   });
 };
 
+function prettyStack(stack) {
+    var lines = stack.split('\n');
+    lines.shift();
+
+    return lines.map(function(line) {
+        return line.indexOf('/node_modules/') > -1 ? chalk.black(line) : chalk.gray(line);
+    }).join('\n');
+}
+
 // method to write directly to the console for local logging
-var writeLocal = function writeLocal(level, data) {
+function writeLocal(level, data) {
     var prettyLevel;
     if(level === 'error') {
-        prettyLevel = level.red;
+        console.error(chalk.red(util.inspect(data)));
     }
     else if(level === 'warning') {
-        prettyLevel = level.yellow;
+        console.error(chalk.yellow(util.inspect(data)));
     }
     else if(level === 'info') {
-        prettyLevel = level.cyan;
+        console.log(chalk.cyan(util.inspect(data)));
     }
     else {
-        prettyLevel = level.white;
+        console.log(chalk.white(util.inspect(data)));
     }
 
-    console.log(prettyLevel, JSON.stringify(data, circular()));
-};
+    if (data && data.stack) {
+        console.log(prettyStack(data.stack));
+    } else if (data && data.exception && data.exception.stack) {
+        console.log(prettyStack(data.exception.stack));
+    }
+}
 
 // method to attach constants to every trace and write
 var formatData = function(data) {
@@ -240,7 +254,7 @@ var logger = {
         };
 
         next();
-    }
+    },
 };
 
 module.exports = logger;
