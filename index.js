@@ -45,8 +45,7 @@ Transaction.prototype.promise = function promise(promise) {
   return promise.then(function() {
     transaction.end();
   }).catch(function(err) {
-    logger.write(err.level || 'error', {
-      transaction: transaction,
+    transaction.write(err.level || 'error', {
       exception: err,
     });
     throw err; // throw it back
