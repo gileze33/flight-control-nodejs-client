@@ -212,6 +212,7 @@ var logger = {
         var _ack = message.ack;
         var _reject = message.reject;
         var _send = message.send;
+        var _rpcExec = message.rpcExec;
 
         var transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
         message.transaction = transaction;
@@ -251,6 +252,14 @@ var logger = {
             data._parentTransaction = message.transaction.id;
 
             _send(topic, data, cb);
+        };
+
+        // swizzle the rpcExec method to the message object so nested tracing can occur
+        message.rpcExec = function(topic, data, opts, cb) {
+            // here we just attach the current transaction ID to the message data
+            data._parentTransaction = message.transaction.id;
+
+            _rpcExec(topic, data, opts, cb);
         };
 
         next();
