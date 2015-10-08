@@ -40,7 +40,17 @@ Transaction.prototype.write = function write(level, data) {
 Transaction.prototype.factory = function factory(type, parent) {
     return new Transaction(type, parent);
 };
-
+Transaction.prototype.promise = function promise(promise) {
+  var transaction = this;
+  return promise.then(function() {
+    transaction.end();
+  }).catch(function(err) {
+    transaction.write(err.level || 'error', {
+      exception: err,
+    });
+    throw err; // throw it back
+  });
+};
 
 // method to write directly to the console for local logging
 var writeLocal = function writeLocal(level, data) {
