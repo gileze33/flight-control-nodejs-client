@@ -61,7 +61,7 @@ function prettyStack(stack) {
   lines.shift();
 
   return lines.map(function(line) {
-    return line.indexOf('/node_modules/') > -1 ? chalk.black(line) : chalk.gray(line);
+    return line.indexOf('/node_modules/') > -1 || line.indexOf('(native)') > -1 ? chalk.black(line) : chalk.gray(line);
   }).join('\n');
 }
 
