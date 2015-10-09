@@ -6,9 +6,8 @@ var circular = require('circular');
 var kSystemHostname = require('os').hostname();
 var kEnvironmentName = process.env.NODE_ENV || 'dev';
 var opts = null;
-var middleware = [];
 
-var Transaction = function Transaction(type, parent) {
+function Transaction(type, parent) {
   this.id = require('uuid').v4();
   this.type = type;
   this.parent = parent || null;
@@ -20,7 +19,7 @@ var Transaction = function Transaction(type, parent) {
       this.parent = this.parent.id;
     }
   }
-};
+}
 
 Transaction.prototype.setData = function setData(data) {
   this.data = data;
@@ -45,7 +44,7 @@ Transaction.prototype.factory = function factory(type, parent) {
   return new Transaction(type, parent);
 };
 
-Transaction.prototype.promise = function promise(promise) {
+Transaction.prototype.promise = function transactionPromise(promise) {
   var transaction = this;
   return promise.then(function() {
     transaction.end();
@@ -68,7 +67,6 @@ function prettyStack(stack) {
 
 // method to write directly to the console for local logging
 function writeLocal(level, data) {
-  var prettyLevel;
   if (level === 'error') {
     console.error(chalk.red(util.inspect(data)));
   }  else if (level === 'warning') {
@@ -157,7 +155,7 @@ var logger = {
       headers: {
         'content-type': 'application/json',
       },
-    }, function(err, response, data) {
+    }, function(err/*, response, data*/) {
       if (done) done(err);
     });
   },
@@ -267,8 +265,6 @@ var logger = {
     next();
   },
 };
-
-module.exports = logger;
 
 // attach a generic exception handler to write to FlightControl
 process.on('uncaughtException', function(err) {
