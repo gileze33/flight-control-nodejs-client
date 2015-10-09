@@ -120,7 +120,7 @@ var logger = {
     opts.traceLocal = bool || false;
   },
 
-  write: function(level, data) {
+  write: function(level, data, done) {
     if (!opts) return;
 
     var obj = {
@@ -134,9 +134,9 @@ var logger = {
 
     obj = formatData(obj);
 
-    logger.commit('log', obj);
-
     if (opts.writeLocal) writeLocal(level, obj);
+
+    logger.commit('log', obj, done);
   },
 
   trace: function(transaction) {
@@ -149,7 +149,7 @@ var logger = {
     if (opts.traceLocal) writeLocal('trace', transaction);
   },
 
-  commit: function(type, obj) {
+  commit: function(type, obj, done) {
     request({
       url: opts.base + '/' + type + '?key=' + opts.key,
       method: 'POST',
@@ -158,9 +158,7 @@ var logger = {
         'content-type': 'application/json',
       },
     }, function(err, response, data) {
-      if (err) {
-        return;
-      }
+      if (done) done(err);
     });
   },
 
