@@ -267,6 +267,7 @@ var logger = {
 };
 
 process.on('uncaughtException', function(err) {
+  if (err.name === 'SyntaxError') throw err;
   writeLocal('error', {
     exception: err,
   });
