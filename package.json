@@ -1,17 +1,26 @@
 {
   "name": "flight-control-client",
   "version": "2.8.3",
-  "description": "",
+  "description": "Node.js instrumentation made easy",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Giles Williams",
   "license": "ISC",
   "dependencies": {
     "chalk": "^1.1.1",
     "circular": "^1.0.5",
     "request": "^2.58.0",
     "uuid": "^2.0.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urbanmassage/flight-control-nodejs-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/urbanmassage/flight-control-nodejs-client/issues"
+  },
+  "homepage": "https://github.com/urbanmassage/flight-control-nodejs-client#readme"
 }
