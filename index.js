@@ -207,64 +207,15 @@ var logger = {
     next();
   },
 
-  rabbitr: function(message, next) {
-    var _ack = message.ack;
-    var _reject = message.reject;
-    var _send = message.send;
-    var _rpcExec = message.rpcExec;
-
-    var transaction = logger.createTransaction('Rabbitr', message.data._parentTransaction);
-    message.transaction = transaction;
-    delete message.data._parentTransaction;
-    message.logger = {
-      write: transaction.write.bind(transaction),
-    };
-
-    var completed = false;
-    var trace = function(status) {
-      // prevent us tracing twice in case theres a race condition on the client
-      if (completed) return;
-      completed = true;
-
-      message.transaction.setData({
-        topic: message.topic,
-        data: message.data,
-        status: status,
-      });
-
-      message.transaction.end();
-    };
-
-    // swizzle the ack and reject methods so they can trace once the message is complete
-    message.ack = function(a1, a2, a3) {
-      trace('ack');
-      _ack(a1, a2, a3);
-    };
-
-    message.reject = function(a1, a2, a3) {
-      trace('reject');
-      _reject(a1, a2, a3);
-    };
-
-    // swizzle the send method to the message object so nested tracing can occur
-    message.send = function(topic, data, cb) {
-      // here we just attach the current transaction ID to the message data
-      data._parentTransaction = message.transaction.id;
-
-      _send(topic, data, cb);
-    };
-
-    // swizzle the rpcExec method to the message object so nested tracing can occur
-    message.rpcExec = function(topic, data, opts, cb) {
-      // here we just attach the current transaction ID to the message data
-      data._parentTransaction = message.transaction.id;
-
-      _rpcExec(topic, data, opts, cb);
-    };
-
-    next();
+  rabbitr: function () {
+    if (!_didWarnForRabbitr) {
+      console.warn(new Error('You\'re using the old way of hooking FC with rabbitr.'));
+      _didWarnForRabbitr = true;
+    }
+    return require('./rabbitr').middleware.apply(null, Array.prototype.slice.call(arguments));
   },
 };
+var _didWarnForRabbitr = false;
 
 process.on('uncaughtException', function(err) {
   if (err.name === 'SyntaxError') throw err;
