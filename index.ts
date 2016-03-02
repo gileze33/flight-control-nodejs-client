@@ -1,69 +1,12 @@
 import objectAssign = require('object-assign');
-var request = require('request');
-var util = require('util');
-var chalk = require('chalk');
+import chalk = require('chalk');
+import request = require('request');
+import util = require('util');
 var circular = require('circular');
 
 const kSystemHostname: string = require('os').hostname();
 const kEnvironmentName: string = process.env.NODE_ENV || 'dev';
 var opts = null;
-
-class Transaction {
-  id: string = require('uuid').v4();
-  type: string;
-  parent: string;
-
-  private _startTime = new Date().getTime();
-
-  constructor(type, parent: string | Transaction) {
-    this.type = type;
-
-    // support for passing in the parent transaction directly rather than needing the ID
-    if (typeof parent === 'string') {
-      this.parent = parent;
-    } else if (parent && parent.id) {
-      this.parent = parent.id;
-    }
-  }
-
-  data: any;
-  setData(data) {
-    this.data = data;
-  }
-
-  /** duration */
-  time: number;
-  end() {
-    const endTime = new Date().getTime();
-
-    this.time = endTime - this._startTime;
-    delete this._startTime;
-
-    logger.trace(this);
-  }
-
-  write(level, data) {
-    data.transaction = this.id;
-
-    logger.write(level, data);
-  }
-
-  factory(type, parent) {
-    return new Transaction(type, parent);
-  }
-
-  promise(promise) {
-    const transaction = this;
-    return promise.then(() => {
-      transaction.end();
-    }).catch(err => {
-      transaction.write(err.level || 'error', {
-        exception: err,
-      });
-      throw err; // throw it back
-    });
-  }
-}
 
 function prettyStack(stack) {
   var lines = stack.split('\n');
@@ -106,9 +49,63 @@ function formatData(data) {
   return formatted;
 }
 
-type T = Transaction;
 namespace logger {
-  export type Transaction = T;
+  export class Transaction {
+    id: string = require('uuid').v4();
+    type: string;
+    parent: string;
+
+    private _startTime = new Date().getTime();
+
+    constructor(type, parent: string | Transaction) {
+      this.type = type;
+
+      // support for passing in the parent transaction directly rather than needing the ID
+      if (typeof parent === 'string') {
+        this.parent = parent;
+      } else if (parent && parent.id) {
+        this.parent = parent.id;
+      }
+    }
+
+    data: any;
+    setData(data) {
+      this.data = data;
+    }
+
+    /** duration */
+    time: number;
+    end() {
+      const endTime = new Date().getTime();
+
+      this.time = endTime - this._startTime;
+      delete this._startTime;
+
+      logger.trace(this);
+    }
+
+    write(level: string, data: any) {
+      data.transaction = this.id;
+
+      logger.write(level, data);
+    }
+
+    factory(type, parent) {
+      return new Transaction(type, parent);
+    }
+
+    promise(promise) {
+      const transaction = this;
+      return promise.then(() => {
+        transaction.end();
+      }).catch(err => {
+        transaction.write(err.level || 'error', {
+          exception: err,
+        });
+        throw err; // throw it back
+      });
+    }
+  }
 
   export function init(sysIdent, base, key) {
     opts = {

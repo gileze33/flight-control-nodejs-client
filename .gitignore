@@ -3,4 +3,5 @@
 node_modules/
 
 *.js
+/*.d.ts
 typings/

@@ -6,6 +6,9 @@
     "inlineSourceMap": true
   },
   "exclude": [
+    "index.d.ts",
+    "rabbitr.d.ts",
+    "sequelize.d.ts",
     "node_modules",
     "typings/browser",
     "typings/browser.d.ts"
