@@ -94,14 +94,16 @@ namespace logger {
       return new Transaction(type, parent);
     }
 
-    promise(promise) {
+    promise<T>(promise: PromiseLike<T>): PromiseLike<T> {
       const transaction = this;
-      return promise.then(() => {
+      return promise.then(result => {
         transaction.end();
-      }).catch(err => {
+        return result; // don't swallow
+      }, err => {
         transaction.write(err.level || 'error', {
           exception: err,
         });
+        transaction.end();
         throw err; // throw it back
       });
     }
