@@ -13,19 +13,21 @@ declare module 'rabbitr' {
   }
 }
 
-function integrateFCWithRabbitr(rabbitr) {
-  var _rpcExec = rabbitr.rpcExec;
-  rabbitr.rpcExec = function rpcExecWithFC(topic, data, opts, callback) {
+function integrateFCWithRabbitr(rabbitr: Rabbitr) {
+  const _rpcExec = rabbitr.rpcExec;
+  function rpcExecWithFC(topic: string, data, callback: Function);
+  function rpcExecWithFC(topic: string, data, opts, callback: Function);
+  function rpcExecWithFC(topic: string, data, opts, callback?: Function) {
     if ('function' === typeof opts) {
       // shift arguments
       callback = opts;
       opts = {};
     }
 
-    var parent = data._parentTransaction;
-    var transaction = fc.createTransaction('rabbitr.rpcExec', parent);
+    const parent = data._parentTransaction;
+    const transaction = fc.createTransaction('rabbitr.rpcExec', parent);
 
-    var trackedCallback = function (error, output) {
+    const trackedCallback = function (error, output) {
       transaction.setData({
         topic: topic,
         error: error,
@@ -34,12 +36,13 @@ function integrateFCWithRabbitr(rabbitr) {
       callback(error, output);
     };
 
-    var newData = objectAssign({}, data, {
+    const newData = objectAssign({}, data, {
       _parentTransaction: transaction.id,
     });
 
     return _rpcExec.call(this, topic, newData, opts, trackedCallback);
-  };
+  }
+  rabbitr.rpcExec = rpcExecWithFC;
 
   rabbitr.use(integrateFCWithRabbitr.middleware);
 }
