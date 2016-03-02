@@ -1,0 +1,24 @@
+language: node_js
+node_js:
+- '4.1'
+- '4.0'
+- '0.12'
+- '0.11'
+- '0.10'
+script:
+- npm run typings
+- npm run build
+- npm test
+after_success:
+- test $TRAVIS_NODE_VERSION = "4.1" &&
+  npm run declaration
+notifications:
+  hipchat:
+    rooms:
+      secure: HenDBrUTfIVmHwbRJOqmbgJhPssRvJc3YfRD6DgXUfNW5pI3FYgtpyejJlG+p3WRE/phxnDpSboKRz16WrUYwNP8Hv5zbVl/W1Afs6joIxCA61LskP8NGRCbRtCA6k6CJZd3Jkd/qhbFbWe47vrMC7JynvZrdh9YIJqSIg9c5i/tqQ7YIi4WXSpDiRwEksyBl3+TZHxtvEIjoWYL8qiDrfYMWiG90ZEaumLEppNrrAp5sWFwgB9XNGBwVgz3lQlsPG++Vqaa0CZEzimn7m0+JLX8q2YwkeOeQ34ecNz2aQiccO1OxgCi7gEl9HTzZ6lktLyyon/6DdjnxmaewTZh2touGLiJwjpmiizqiNa5FqLEjgPWdLFs6jxG4enOJmt4+C2Djk+5fbn2rAEyhMItmAk0Osh7pxDg9e+bugZwlfvfp6KwyE6FIA09nt8JDIINWk6uFVFw+5foetQXMYszl+JeBm4XpYXyHJxL7vhbiNIG3YRFpvJnSPwougUWwj5kCbmd/0UhLT4Uaw2u6qWLM0/sbgvMkrTqRQpX2rIDa4Z6X/lFYfGc++NdGTeKB02A3B1p2n6LBjRTvHv+krly63bEVOUqhnn5umjt9iaDUZAQ3ae+b3SfUvBRyg3eAzwxkqgjCb4SDxky8rJOwnidZNrGIYZjtGwzEnH0Osrp+bU=
+    template:
+    - <b>%{result}:</b> <a href="https://github.com/%{repository_slug}">%{repository_slug}</a>#<a
+      href="%{build_url}">%{build_number}</a> (<a href="https://github.com/%{repository_slug}/tree/%{branch}">%{branch}</a>
+      - <a href="%{compare_url}">%{commit}</a> by %{author})<br>%{message} It took
+      %{duration}.<br><pre>%{commit_message}</pre>
+    format: html
