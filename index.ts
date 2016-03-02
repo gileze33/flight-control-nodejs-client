@@ -106,24 +106,27 @@ function formatData(data) {
   return formatted;
 }
 
-var logger = {
-  init(sysIdent, base, key) {
+type T = Transaction;
+namespace logger {
+  export type Transaction = T;
+
+  export function init(sysIdent, base, key) {
     opts = {
       sysIdent: sysIdent,
       base: base,
       key: key,
     };
-  },
+  }
 
-  setWriteLocalEnabled(bool: boolean) {
+  export function setWriteLocalEnabled(bool: boolean) {
     opts.writeLocal = bool || false;
-  },
+  }
 
-  setTraceLocalEnabled(bool: boolean) {
+  export function setTraceLocalEnabled(bool: boolean) {
     opts.traceLocal = bool || false;
-  },
+  }
 
-  write(level: string, data, done?: Function) {
+  export function write(level: string, data, done?: Function) {
     if (!opts) return;
 
     const obj = {
@@ -137,9 +140,9 @@ var logger = {
     if (opts.writeLocal) writeLocal(level, formatted);
 
     logger.commit('log', formatted, done);
-  },
+  }
 
-  trace(transaction) {
+  export function trace(transaction) {
     if (!opts) return;
 
     transaction = formatData(transaction);
@@ -147,9 +150,9 @@ var logger = {
     logger.commit('transaction', transaction);
 
     if (opts.traceLocal) writeLocal('trace', transaction);
-  },
+  }
 
-  commit(type: string, obj, done?: Function) {
+  export function commit(type: string, obj, done?: Function) {
     request({
       url: opts.base + '/' + type + '?key=' + opts.key,
       method: 'POST',
@@ -160,13 +163,13 @@ var logger = {
     }, function(err/*, response, data*/) {
       if (done) done(err);
     });
-  },
+  }
 
-  createTransaction(type, parent) {
+  export function createTransaction(type, parent) {
     return new Transaction(type, parent);
-  },
+  }
 
-  express(req, res, next) {
+  export function express(req, res, next) {
     var parentTransactionID = null;
     if (req.headers['x-parent-transaction']) {
       parentTransactionID = req.headers['x-parent-transaction'];
@@ -207,17 +210,17 @@ var logger = {
     });
 
     next();
-  },
+  }
 
-  rabbitr () {
+  let _didWarnForRabbitr = false;
+  export function rabbitr() {
     if (!_didWarnForRabbitr) {
       console.warn(new Error('You\'re using the old way of hooking FC with rabbitr.'));
       _didWarnForRabbitr = true;
     }
     return require('./rabbitr').middleware.apply(null, Array.prototype.slice.call(arguments));
-  },
-};
-var _didWarnForRabbitr = false;
+  }
+}
 
 process.on('uncaughtException', function(err) {
   if (err.name === 'SyntaxError') throw err;

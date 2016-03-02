@@ -1,7 +1,17 @@
 import fc = require('./index');
 import objectAssign = require('object-assign');
 
-function fcRabbitrMiddleware(message, next) {
+import Rabbitr = require('rabbitr');
+
+declare module 'rabbitr' {
+  // extend rabbitr
+  interface IMessage<TData> {
+    logger?: any;
+    transaction?: fc.Transaction;
+  }
+}
+
+function fcRabbitrMiddleware(message: Rabbitr.IMessage<any>, next) {
   var _ack = message.ack;
   var _reject = message.reject;
   var _send = message.send;
@@ -29,32 +39,30 @@ function fcRabbitrMiddleware(message, next) {
     message.transaction.end();
   };
 
-  // swizzle the ack and reject methods so they can trace once the message is complete
-  message.ack = function(a1, a2, a3) {
-    trace('ack');
-    _ack(a1, a2, a3);
-  };
+  function preRun<T extends Function>(pre: Function, fn: T): T {
+    return <any>((...args) => {
+      pre(...args);
+      return fn(...args);
+    });
+  }
 
-  message.reject = function(a1, a2, a3) {
-    trace('reject');
-    _reject(a1, a2, a3);
-  };
+  // swizzle the ack and reject methods so they can trace once the message is complete
+  message.ack = preRun(() => trace('ack'), message.ack);
+  message.reject = preRun(() => trace('reject'), message.reject);
 
   // swizzle the send method to the message object so nested tracing can occur
-  message.send = function(topic, data, cb) {
-    // here we just attach the current transaction ID to the message data
-    data._parentTransaction = message.transaction.id;
-
-    _send(topic, data, cb);
-  };
+  message.send = preRun(
+    (topic, data) =>
+      // here we just attach the current transaction ID to the message data
+      data._parentTransaction = message.transaction.id
+    , message.send);
 
   // swizzle the rpcExec method to the message object so nested tracing can occur
-  message.rpcExec = function(topic, data, opts, cb) {
-    // here we just attach the current transaction ID to the message data
-    data._parentTransaction = message.transaction.id;
-
-    _rpcExec(topic, data, opts, cb);
-  };
+  message.rpcExec = preRun(
+    (topic, data) =>
+      // here we just attach the current transaction ID to the message data
+      data._parentTransaction = message.transaction.id
+    , message.rpcExec);
 
   next();
 }
