@@ -1,5 +1,5 @@
-var fc = require('./index');
-var objectAssign = require('object-assign');
+import fc = require('./index');
+import objectAssign = require('object-assign');
 
 function fcRabbitrMiddleware(message, next) {
   var _ack = message.ack;
@@ -89,6 +89,8 @@ function integrateFCWithRabbitr(rabbitr) {
 
   rabbitr.use(fcRabbitrMiddleware);
 }
+namespace integrateFCWithRabbitr {
+  export var middleware = fcRabbitrMiddleware;
+}
 
-module.exports = integrateFCWithRabbitr;
-module.exports.middleware = fcRabbitrMiddleware;
+export = integrateFCWithRabbitr;

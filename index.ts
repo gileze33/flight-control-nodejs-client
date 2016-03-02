@@ -1,60 +1,69 @@
+import objectAssign = require('object-assign');
 var request = require('request');
 var util = require('util');
 var chalk = require('chalk');
 var circular = require('circular');
 
-var kSystemHostname = require('os').hostname();
-var kEnvironmentName = process.env.NODE_ENV || 'dev';
+const kSystemHostname: string = require('os').hostname();
+const kEnvironmentName: string = process.env.NODE_ENV || 'dev';
 var opts = null;
 
-function Transaction(type, parent) {
-  this.id = require('uuid').v4();
-  this.type = type;
-  this.parent = parent || null;
-  this._startTime = new Date().getTime();
+class Transaction {
+  id: string = require('uuid').v4();
+  type: string;
+  parent: string;
 
-  // support for passing in the parent transaction directly rather than needing the ID
-  if (typeof (this.parent) === 'object' && this.parent != null) {
-    if (typeof (this.parent.id) !== 'undefined') {
-      this.parent = this.parent.id;
+  private _startTime = new Date().getTime();
+
+  constructor(type, parent: string | Transaction) {
+    this.type = type;
+
+    // support for passing in the parent transaction directly rather than needing the ID
+    if (typeof parent === 'string') {
+      this.parent = parent;
+    } else if (parent && parent.id) {
+      this.parent = parent.id;
     }
   }
-}
 
-Transaction.prototype.setData = function setData(data) {
-  this.data = data;
-};
+  data: any;
+  setData(data) {
+    this.data = data;
+  }
 
-Transaction.prototype.end = function end() {
-  var endTime = new Date().getTime();
+  /** duration */
+  time: number;
+  end() {
+    const endTime = new Date().getTime();
 
-  this.time = endTime - this._startTime;
-  delete this._startTime;
+    this.time = endTime - this._startTime;
+    delete this._startTime;
 
-  logger.trace(this);
-};
+    logger.trace(this);
+  }
 
-Transaction.prototype.write = function write(level, data) {
-  data.transaction = this.id;
+  write(level, data) {
+    data.transaction = this.id;
 
-  logger.write(level, data);
-};
+    logger.write(level, data);
+  }
 
-Transaction.prototype.factory = function factory(type, parent) {
-  return new Transaction(type, parent);
-};
+  factory(type, parent) {
+    return new Transaction(type, parent);
+  }
 
-Transaction.prototype.promise = function transactionPromise(promise) {
-  var transaction = this;
-  return promise.then(function() {
-    transaction.end();
-  }).catch(function(err) {
-    transaction.write(err.level || 'error', {
-      exception: err,
+  promise(promise) {
+    const transaction = this;
+    return promise.then(() => {
+      transaction.end();
+    }).catch(err => {
+      transaction.write(err.level || 'error', {
+        exception: err,
+      });
+      throw err; // throw it back
     });
-    throw err; // throw it back
-  });
-};
+  }
+}
 
 function prettyStack(stack) {
   var lines = stack.split('\n');
@@ -85,24 +94,20 @@ function writeLocal(level, data) {
 }
 
 // method to attach constants to every trace and write
-var formatData = function(data) {
-  var dataOut = {};
-
+function formatData(data) {
   // basic clone of data so we don't attach system and hostname to original obj
-  for (var k in data) {
-    dataOut[k] = data[k];
-  }
+  const formatted = objectAssign({}, data, {
+    timestamp: new Date().toString(),
+    system: opts.sysIdent,
+    hostname: kSystemHostname,
+    env: kEnvironmentName,
+  });
 
-  dataOut.timestamp = new Date().toString();
-  dataOut.system = opts.sysIdent;
-  dataOut.hostname = kSystemHostname;
-  dataOut.env = kEnvironmentName;
-
-  return dataOut;
-};
+  return formatted;
+}
 
 var logger = {
-  init: function(sysIdent, base, key) {
+  init(sysIdent, base, key) {
     opts = {
       sysIdent: sysIdent,
       base: base,
@@ -110,34 +115,31 @@ var logger = {
     };
   },
 
-  setWriteLocalEnabled: function(bool) {
+  setWriteLocalEnabled(bool: boolean) {
     opts.writeLocal = bool || false;
   },
 
-  setTraceLocalEnabled: function(bool) {
+  setTraceLocalEnabled(bool: boolean) {
     opts.traceLocal = bool || false;
   },
 
-  write: function(level, data, done) {
+  write(level: string, data, done?: Function) {
     if (!opts) return;
 
-    var obj = {
-      level: level,
-      data: data,
+    const obj = {
+      level,
+      data,
+      transaction: data.transaction || void 0,
     };
 
-    if (data.transaction) {
-      obj.transaction = data.transaction;
-    }
+    const formatted = formatData(obj);
 
-    obj = formatData(obj);
+    if (opts.writeLocal) writeLocal(level, formatted);
 
-    if (opts.writeLocal) writeLocal(level, obj);
-
-    logger.commit('log', obj, done);
+    logger.commit('log', formatted, done);
   },
 
-  trace: function(transaction) {
+  trace(transaction) {
     if (!opts) return;
 
     transaction = formatData(transaction);
@@ -147,7 +149,7 @@ var logger = {
     if (opts.traceLocal) writeLocal('trace', transaction);
   },
 
-  commit: function(type, obj, done) {
+  commit(type: string, obj, done?: Function) {
     request({
       url: opts.base + '/' + type + '?key=' + opts.key,
       method: 'POST',
@@ -160,11 +162,11 @@ var logger = {
     });
   },
 
-  createTransaction: function(type, parent) {
+  createTransaction(type, parent) {
     return new Transaction(type, parent);
   },
 
-  express: function(req, res, next) {
+  express(req, res, next) {
     var parentTransactionID = null;
     if (req.headers['x-parent-transaction']) {
       parentTransactionID = req.headers['x-parent-transaction'];
@@ -173,7 +175,7 @@ var logger = {
     req.transaction = logger.createTransaction('express', parentTransactionID);
 
     req.logger = {
-      write: function(level, data) {
+      write(level, data) {
         var object = {};
 
         // basic clone of data so we don't attach these props to the obj
@@ -207,7 +209,7 @@ var logger = {
     next();
   },
 
-  rabbitr: function () {
+  rabbitr () {
     if (!_didWarnForRabbitr) {
       console.warn(new Error('You\'re using the old way of hooking FC with rabbitr.'));
       _didWarnForRabbitr = true;
@@ -227,4 +229,4 @@ process.on('uncaughtException', function(err) {
 
 console.log('Added generic exception handler for FlightControl logger\n');
 
-module.exports = logger;
+export = logger;

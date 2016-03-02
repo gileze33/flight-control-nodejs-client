@@ -1,7 +1,7 @@
 /**
  * Hooks into sequelize connection object and creates a new transaction for every query.
  */
-var fc = require('./index');
+import fc = require('./index');
 
 function beforeHook(model, action, values, options) {
   var parent = options.fcTransaction;
@@ -48,7 +48,7 @@ var singleParam = [
  *     var sequelize = new Sequelize(...);
  *     sequelizeFCHook(sequelize);
  */
-module.exports = function sequelizeFCHook(sequelize) {
+export = function sequelizeFCHook(sequelize) {
   sequelize.addHook('beforeDefine', function beforeDefine(attributes, options) {
     var model = options.modelName;
     options.hooks = options.hooks || {};
