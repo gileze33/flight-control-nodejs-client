@@ -1,3 +1,6 @@
+# 2.10.0
+- typescript!
+
 # 2.9.0
 - better integration with rabbitr
 
@@ -8,7 +11,8 @@ rabbitr.use(fc.rabbitr);
 ```
 with
 ```js
-require('flight-control-client/rabbitr')(rabbitr);
+import * as hook from 'flight-control-client/rabbitr';
+hook(rabbitr);
 ```
 
 # 2.8.3
