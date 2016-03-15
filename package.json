@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p .",
     "preversion": "npm run build",
+    "postversion": "git push --follow-tags",
     "typings": "typings install",
     "test": "mocha",
     "declaration": "rm *.d.ts || true && mkdir -p dist && tsc typings/main.d.ts *.ts --outDir dist/ --declaration --module commonjs --target es5 && mv dist/*.d.ts ./ && rm -rf dist/"
