@@ -1,3 +1,6 @@
+# 2.10.2
+- wrapAsync method
+
 # 2.10.0
 - typescript!
 

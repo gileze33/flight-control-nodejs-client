@@ -3,7 +3,7 @@ import {wrapAsync} from '../index';
 import * as Bluebird from 'bluebird';
 
 describe('#wrapAsync', () => {
-  it('works', () => {
+  it('input and output are not affected', () => {
     const fn = wrapAsync('test', a => {
       expect(a).to.equal(1);
       return Bluebird.resolve(2);
