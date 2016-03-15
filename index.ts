@@ -57,7 +57,7 @@ namespace logger {
 
     private _startTime = new Date().getTime();
 
-    constructor(type, parent: string | Transaction) {
+    constructor(type: string, parent?: string | Transaction) {
       this.type = type;
 
       // support for passing in the parent transaction directly rather than needing the ID
@@ -218,6 +218,31 @@ namespace logger {
       _didWarnForRabbitr = true;
     }
     return require('./rabbitr').middleware.apply(null, Array.prototype.slice.call(arguments));
+  }
+
+  interface AsyncFunction { (...args): PromiseLike<any>; }
+  /**
+   * Wrap a function that returns a promise with a transaction.
+   *
+   * Returns a function that's identical to the wrapped one. You can also pass parent transactions
+   *  in the context (`this` object) as `this.transaction`.
+   */
+  export function wrapAsync<Fn extends AsyncFunction>(name: string, fn: Fn): Fn {
+    return function(...args) {
+      const transaction = new Transaction(name, this && this.transaction);
+      const promise = fn(...args);
+
+      return promise && promise.then ? promise.then(result => {
+        transaction.setData({result, fulfilled: true});
+        transaction.end();
+        return result;
+      }, error => {
+        transaction.setData({fulfilled: false});
+        transaction.write(error && error.level || 'error', error);
+        transaction.end();
+        throw error;
+      }) : promise;
+    } as Fn;
   }
 }
 

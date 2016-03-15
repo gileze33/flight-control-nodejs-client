@@ -2,6 +2,8 @@
   "name": "flight-control-client",
   "dependencies": {},
   "devDependencies": {
+    "bluebird": "registry:npm/bluebird#3.2.1+20160211005852",
+    "chai": "registry:npm/chai#3.4.0+20160308201903",
     "chalk": "github:typed-typings/npm-chalk#a7e422c5455e70292e5675a727d43a7b05fc3e58",
     "object-assign": "github:louy/typed-object-assign#91dd2548172cee5dc0aa531d1b452a76044dbff2"
   },
@@ -11,6 +13,7 @@
   "ambientDevDependencies": {
     "amqplib": "github:DefinitelyTyped/DefinitelyTyped/amqplib/amqplib.d.ts#84134474c225bcd7e3770cc89cb01071b2c59b18",
     "form-data": "github:DefinitelyTyped/DefinitelyTyped/form-data/form-data.d.ts#bb1b99052bf1d697f0368fbff56898bc1f5a525c",
+    "mocha": "registry:dt/mocha#2.2.5+20151023103246",
     "request": "github:DefinitelyTyped/DefinitelyTyped/request/request.d.ts#abc2bcfb8524b1e027e6298d3348012b5b06eda5",
     "when": "github:DefinitelyTyped/DefinitelyTyped/when/when.d.ts#cfc3e22a3d3e373903c8a4db515014ede84f9deb"
   }
