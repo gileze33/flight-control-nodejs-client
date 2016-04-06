@@ -10,9 +10,6 @@ script:
 - npm run typings
 - npm run build
 - npm test
-after_success:
-- test $TRAVIS_NODE_VERSION = "4.1" &&
-  npm run declaration
 notifications:
   hipchat:
     rooms:
