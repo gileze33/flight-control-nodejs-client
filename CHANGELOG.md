@@ -1,3 +1,6 @@
+# 2.11.0
+- stop publishing ts files to npm
+
 # 2.10.2
 - wrapAsync method
 

@@ -3,7 +3,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5",
-    "inlineSourceMap": true
+    "sourceMap": true,
+    "declaration": true
   },
   "exclude": [
     "index.d.ts",
