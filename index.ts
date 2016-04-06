@@ -220,7 +220,7 @@ namespace logger {
     return require('./rabbitr').middleware.apply(null, Array.prototype.slice.call(arguments));
   }
 
-  interface AsyncFunction { (...args): PromiseLike<any>; }
+  export interface AsyncFunction { (...args): PromiseLike<any>; }
   /**
    * Wrap a function that returns a promise with a transaction.
    *
