@@ -255,9 +255,7 @@ process.on('uncaughtException', function(err) {
 });
 
 process.on('unhandledRejection', (reason, p) => {
-  writeLocal('warning', {
-    exception: reason,
-  });
+  writeLocal('warning', reason);
 });
 
 console.log('Added generic exception handler for FlightControl logger\n');
