@@ -208,6 +208,8 @@ namespace logger {
       req.transaction.end();
     });
 
+    res.setHeader('X-FC-Transaction', transaction.id);
+
     next();
   }
 
