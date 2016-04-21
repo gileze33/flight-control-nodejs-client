@@ -1,3 +1,7 @@
+# 2.12.0
+- always send 'X-FC-Transaction' header in express middleware
+- log unhandled promise rejections as warnings
+
 # 2.11.0
 - stop publishing ts files to npm
 
