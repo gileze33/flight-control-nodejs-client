@@ -12,7 +12,7 @@ function prettyStack(stack) {
   var lines = stack.split('\n');
   lines.shift();
 
-  return lines.map(function(line) {
+  return lines.map(function (line) {
     return line.indexOf('/node_modules/') > -1 || line.indexOf('(native)') > -1 ? chalk.black(line) : chalk.gray(line);
   }).join('\n');
 }
@@ -21,11 +21,11 @@ function prettyStack(stack) {
 function writeLocal(level, data) {
   if (level === 'error') {
     console.error(chalk.red(util.inspect(data)));
-  }  else if (level === 'warning') {
+  } else if (level === 'warning') {
     console.error(chalk.yellow(util.inspect(data)));
-  }  else if (level === 'info') {
+  } else if (level === 'info') {
     console.log(chalk.cyan(util.inspect(data)));
-  }  else {
+  } else {
     console.log(chalk.white(util.inspect(data)));
   }
 
@@ -90,22 +90,19 @@ namespace logger {
       logger.write(level, data);
     }
 
-    factory(type, parent) {
+    factory(type: string, parent?: string | Transaction) {
       return new Transaction(type, parent);
     }
 
-    promise<T>(promise: PromiseLike<T>): PromiseLike<T> {
-      const transaction = this;
+    promise<T, P extends PromiseLike<T>>(promise: P): P {
       return promise.then(result => {
-        transaction.end();
+        this.end();
         return result; // don't swallow
-      }, err => {
-        transaction.write(err.level || 'error', {
-          exception: err,
-        });
-        transaction.end();
-        throw err; // throw it back
-      });
+      }, error => {
+        this.write(error.level || 'error', error);
+        this.end();
+        throw error; // throw it back
+      }) as P;
     }
   }
 
@@ -159,12 +156,12 @@ namespace logger {
       headers: {
         'content-type': 'application/json',
       },
-    }, function(err/*, response, data*/) {
+    }, function (err/*, response, data*/) {
       if (done) done(err);
     });
   }
 
-  export function createTransaction(type, parent) {
+  export function createTransaction(type: string, parent?: string | Transaction) {
     return new Transaction(type, parent);
   }
 
@@ -189,7 +186,7 @@ namespace logger {
       },
     };
 
-    res.on('finish', function() {
+    res.on('finish', function () {
       req.transaction.setData({
         request: {
           route: (req.route) ? req.route.path : '',
@@ -230,16 +227,16 @@ namespace logger {
    *  in the context (`this` object) as `this.transaction`.
    */
   export function wrapAsync<Fn extends AsyncFunction>(name: string, fn: Fn): Fn {
-    return function(...args) {
+    return function (...args) {
       const transaction = new Transaction(name, this && this.transaction);
       const promise = fn(...args);
 
       return promise && promise.then ? promise.then(result => {
-        transaction.setData({result, fulfilled: true});
+        transaction.setData({ result, fulfilled: true });
         transaction.end();
         return result;
       }, error => {
-        transaction.setData({fulfilled: false});
+        transaction.setData({ fulfilled: false });
         transaction.write(error && error.level || 'error', error);
         transaction.end();
         throw error;
@@ -248,7 +245,7 @@ namespace logger {
   }
 }
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
   if (err.name === 'SyntaxError') throw err;
   writeLocal('error', {
     exception: err,
